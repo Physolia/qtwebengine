@@ -46,6 +46,7 @@
 #include "content/browser/startup_helper.h"
 #include "content/browser/utility_process_host.h"
 #include "content/gpu/in_process_gpu_thread.h"
+#include "content/browser/tracing/memory_instrumentation_util.h"
 #include "content/public/app/content_main.h"
 #include "content/public/app/content_main_runner.h"
 #include "content/public/browser/browser_main_runner.h"
@@ -1001,6 +1002,7 @@ WebEngineContext::WebEngineContext()
 
     m_mojoIpcSupport = std::make_unique<content::MojoIpcSupport>(content::BrowserTaskExecutor::CreateIOThread());
     download::SetIOTaskRunner(m_mojoIpcSupport->io_thread()->task_runner());
+    content::InitializeBrowserMemoryInstrumentationClient();
     std::unique_ptr<content::StartupData> startupData = m_mojoIpcSupport->CreateBrowserStartupData();
 
     // Once the MessageLoop has been created, attach a top-level RunLoop.
