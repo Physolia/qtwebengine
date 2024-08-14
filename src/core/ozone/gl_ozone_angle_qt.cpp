@@ -1,10 +1,7 @@
 // Copyright (C) 2024 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
 
-#include "gl_context_qt.h"
 #include "gl_ozone_angle_qt.h"
-#include "gl_surface_egl_qt.h"
-#include "ozone_util_qt.h"
 
 #include "ui/base/ozone_buildflags.h"
 #include "ui/gl/gl_bindings.h"
@@ -14,7 +11,7 @@
 #include "ui/ozone/common/native_pixmap_egl_binding.h"
 
 #if BUILDFLAG(IS_OZONE_X11)
-#include "ui/gl/gl_glx_api_implementation.h"
+#include "ozone_util_qt.h"
 #endif
 
 extern "C" {
@@ -24,13 +21,6 @@ extern __eglMustCastToProperFunctionPointerType EGL_GetProcAddress(const char *p
 
 namespace ui {
 
-GLOzoneANGLEQt::GLOzoneANGLEQt()
-{
-#if BUILDFLAG(IS_OZONE_X11)
-    m_xdisplay = OzoneUtilQt::getXDisplay();
-#endif
-}
-
 bool GLOzoneANGLEQt::LoadGLES2Bindings(const gl::GLImplementationParts & /*implementation*/)
 {
     gl::SetGLGetProcAddressProc(&EGL_GetProcAddress);
@@ -39,43 +29,18 @@ bool GLOzoneANGLEQt::LoadGLES2Bindings(const gl::GLImplementationParts & /*imple
 
 bool GLOzoneANGLEQt::InitializeStaticGLBindings(const gl::GLImplementationParts &implementation)
 {
-    bool res = GLOzoneEGL::InitializeStaticGLBindings(implementation);
-
-#if BUILDFLAG(IS_OZONE_X11)
-    if (OzoneUtilQt::usingGLX()) {
-        gl::SetGLGetProcAddressProc(reinterpret_cast<gl::GLGetProcAddressProc>(
-                GLContextHelper::getGlXGetProcAddress()));
-        gl::InitializeStaticGLBindingsGLX();
-        gl::SetGLGetProcAddressProc(&EGL_GetProcAddress);
-    }
-#endif
-
-    return res;
+    return GLOzoneEGL::InitializeStaticGLBindings(implementation);
 }
 
 bool GLOzoneANGLEQt::InitializeExtensionSettingsOneOffPlatform(gl::GLDisplay *display)
 {
-    bool res = GLOzoneEGL::InitializeExtensionSettingsOneOffPlatform(
+    return GLOzoneEGL::InitializeExtensionSettingsOneOffPlatform(
             static_cast<gl::GLDisplayEGL *>(display));
-
-#if BUILDFLAG(IS_OZONE_X11)
-    if (OzoneUtilQt::usingGLX()) {
-        gl::SetGLGetProcAddressProc(reinterpret_cast<gl::GLGetProcAddressProc>(
-                GLContextHelper::getGlXGetProcAddress()));
-        std::string extensions = glXQueryExtensionsString((struct _XDisplay *)m_xdisplay, 0);
-        gl::g_driver_glx.InitializeExtensionBindings(extensions.c_str());
-        gl::SetGLGetProcAddressProc(&EGL_GetProcAddress);
-    }
-#endif
-
-    return res;
 }
 
-scoped_refptr<gl::GLSurface> GLOzoneANGLEQt::CreateViewGLSurface(gl::GLDisplay *display,
-                                                                 gfx::AcceleratedWidget window)
+scoped_refptr<gl::GLSurface> GLOzoneANGLEQt::CreateViewGLSurface(gl::GLDisplay * /*display*/,
+                                                                 gfx::AcceleratedWidget /*window*/)
 {
-    Q_UNUSED(display);
-    Q_UNUSED(window);
     return nullptr;
 }
 
@@ -94,8 +59,10 @@ scoped_refptr<gl::GLSurface> GLOzoneANGLEQt::CreateOffscreenGLSurface(gl::GLDisp
 gl::EGLDisplayPlatform GLOzoneANGLEQt::GetNativeDisplay()
 {
 #if BUILDFLAG(IS_OZONE_X11)
-    if (m_xdisplay)
-        return gl::EGLDisplayPlatform(reinterpret_cast<EGLNativeDisplayType>(m_xdisplay));
+    static EGLNativeDisplayType nativeDisplay =
+            reinterpret_cast<EGLNativeDisplayType>(OzoneUtilQt::getXDisplay());
+    if (nativeDisplay)
+        return gl::EGLDisplayPlatform(nativeDisplay);
 #endif
 
     if (gl::g_driver_egl.client_ext.b_EGL_MESA_platform_surfaceless)

@@ -51,6 +51,9 @@ qt_feature("webengine-system-alsa" PRIVATE
 qt_feature("webengine-v8-context-snapshot" PRIVATE
     LABEL "Use v8 context snapshot"
     AUTODETECT NOT CMAKE_CROSSCOMPILING
+    # FIXME: Try to re-enable it for debug build.
+    # It is disabled due to OOM issues with gold linker on CI.
+    DISABLE CMAKE_BUILD_TYPE STREQUAL Debug
 )
 qt_feature("webengine-geolocation" PUBLIC
     LABEL "Geolocation"

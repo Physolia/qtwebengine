@@ -202,11 +202,7 @@ foreach(arch ${archs})
 
         extend_gn_target(${buildGn} CONDITION LINUX
             SOURCES
-                compositor/content_gpu_client_qt.cpp compositor/content_gpu_client_qt.h
-                ozone/gl_context_qt.cpp ozone/gl_context_qt.h
                 ozone/gl_ozone_angle_qt.cpp ozone/gl_ozone_angle_qt.h
-                ozone/gl_share_context_qt.cpp ozone/gl_share_context_qt.h
-                ozone/gl_surface_qt.cpp ozone/gl_surface_qt.h
                 ozone/ozone_util_qt.cpp ozone/ozone_util_qt.h
                 ozone/platform_window_qt.cpp ozone/platform_window_qt.h
                 ozone/surface_factory_qt.cpp ozone/surface_factory_qt.h
@@ -220,28 +216,22 @@ foreach(arch ${archs})
         extend_gn_target(${buildGn} CONDITION LINUX AND QT_FEATURE_opengl AND QT_FEATURE_webengine_ozone_x11
             SOURCES
                 ozone/glx_helper.cpp ozone/glx_helper.h
-                ozone/gl_ozone_glx_qt.cpp ozone/gl_ozone_glx_qt.h
-                ozone/gl_surface_glx_qt.cpp ozone/gl_surface_glx_qt.h
         )
 
         extend_gn_target(${buildGn} CONDITION LINUX AND QT_FEATURE_opengl AND QT_FEATURE_egl
             SOURCES
                 ozone/egl_helper.cpp ozone/egl_helper.h
-                ozone/gl_ozone_egl_qt.cpp ozone/gl_ozone_egl_qt.h
-                ozone/gl_surface_egl_qt.cpp ozone/gl_surface_egl_qt.h
+        )
+
+        extend_gn_target(${buildGn} CONDITION QT_FEATURE_opengl
+            SOURCES
+                compositor/native_skia_output_device_opengl.cpp compositor/native_skia_output_device_opengl.h
         )
 
         extend_gn_target(${buildGn} CONDITION QT_FEATURE_webengine_vulkan
             SOURCES
                 compositor/native_skia_output_device_vulkan.cpp compositor/native_skia_output_device_vulkan.h
                 compositor/vulkan_implementation_qt.cpp compositor/vulkan_implementation_qt.h
-        )
-
-        extend_gn_target(${buildGn} CONDITION QT_FEATURE_opengl
-            SOURCES
-                compositor/compositor_resource_fence.cpp compositor/compositor_resource_fence.h
-                compositor/display_skia_output_device.cpp compositor/display_skia_output_device.h
-                compositor/native_skia_output_device_opengl.cpp compositor/native_skia_output_device_opengl.h
         )
 
         extend_gn_target(${buildGn} CONDITION MACOS

@@ -26,17 +26,23 @@ void *getXDisplay()
 
 QOpenGLContext *getQOpenGLContext()
 {
+    static QOpenGLContext *tmpGLContext = nullptr;
+
 #if QT_CONFIG(opengl)
-    // We always expect global share context here because it is a requirement for direct GLX and
-    // EGL rendering, see QtWebEngineCore::ensureShareContext().
-    // TODO: Make sure a temporary context is created here as a fallback when we remove the global
-    //       share context dependency of QtWebEngine.
-    Q_ASSERT(QOpenGLContext::globalShareContext());
     if (auto *shareContext = QOpenGLContext::globalShareContext())
         return shareContext;
+
+    if (auto *currentContext = QOpenGLContext::currentContext())
+        return currentContext;
+
+    if (!tmpGLContext) {
+        tmpGLContext = new QOpenGLContext();
+        tmpGLContext->create();
+        QObject::connect(qGuiApp, &QGuiApplication::aboutToQuit, []() { delete tmpGLContext; });
+    }
 #endif
 
-    return nullptr;
+    return tmpGLContext;
 }
 
 bool usingGLX()

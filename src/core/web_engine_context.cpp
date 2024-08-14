@@ -106,7 +106,6 @@
 #include <QQuickWindow>
 #include <QRegularExpression>
 #include <QStringList>
-#include <QSurfaceFormat>
 #include <QNetworkProxy>
 #include <QtGui/qpa/qplatformintegration.h>
 #include <QtGui/private/qguiapplication_p.h>
@@ -118,13 +117,6 @@
 
 #if BUILDFLAG(IS_OZONE)
 #include "ozone/ozone_util_qt.h"
-
-#include <QOpenGLContext>
-#include <qopenglcontext_platform.h>
-
-QT_BEGIN_NAMESPACE
-Q_GUI_EXPORT QOpenGLContext *qt_gl_global_share_context();
-QT_END_NAMESPACE
 #endif // BUILDFLAG(IS_OZONE)
 #endif // QT_CONFIG(opengl)
 
@@ -374,23 +366,6 @@ static bool usingSupportedSGBackend()
     return device.isEmpty() || device == QLatin1StringView("rhi");
 }
 
-#if QT_CONFIG(opengl) && BUILDFLAG(IS_OZONE)
-static bool usingSoftwareDynamicGL()
-{
-    const char openGlVar[] = "QT_OPENGL";
-    if (QCoreApplication::testAttribute(Qt::AA_UseSoftwareOpenGL))
-        return true;
-
-    if (qEnvironmentVariableIsSet(openGlVar)) {
-        const QByteArray requested = qgetenv(openGlVar);
-        if (requested == "software")
-            return true;
-    }
-
-    return false;
-}
-#endif // QT_CONFIG(opengl) && BUILDFLAG(IS_OZONE)
-
 static std::string getGLType(bool disableGpu)
 {
     if (disableGpu || !usingSupportedSGBackend())
@@ -456,37 +431,17 @@ static void logContext(const std::string &glType, base::CommandLine *cmd)
             << QLatin1StringView("\n");
         log << QLatin1StringView("\n");
 
-#if QT_CONFIG(opengl) && BUILDFLAG(IS_OZONE)
+#if QT_CONFIG(opengl)
+#if BUILDFLAG(IS_OZONE)
         log << QLatin1StringView("Using GLX:")
             << QLatin1StringView(OzoneUtilQt::usingGLX() ? "yes" : "no") << QLatin1StringView("\n");
         log << QLatin1StringView("Using EGL:")
             << QLatin1StringView(OzoneUtilQt::usingEGL() ? "yes" : "no") << QLatin1StringView("\n");
+#endif // BUILDFLAG(IS_OZONE)
         log << QLatin1StringView("Using Shared GL:")
-            << QLatin1StringView(qt_gl_global_share_context() ? "yes" : "no")
+            << QLatin1StringView(QOpenGLContext::globalShareContext() ? "yes" : "no")
             << QLatin1StringView("\n");
-        if (qt_gl_global_share_context()) {
-            log << QLatin1StringView("Using Software Dynamic GL:")
-                << QLatin1StringView(usingSoftwareDynamicGL() ? "yes" : "no")
-                << QLatin1StringView("\n");
-
-            const QSurfaceFormat sharedFormat = qt_gl_global_share_context()
-                    ? qt_gl_global_share_context()->format()
-                    : QSurfaceFormat::defaultFormat();
-            const auto profile =
-                    QMetaEnum::fromType<QSurfaceFormat::OpenGLContextProfile>().valueToKey(
-                            sharedFormat.profile());
-            const auto type = QMetaEnum::fromType<QSurfaceFormat::RenderableType>().valueToKey(
-                    sharedFormat.renderableType());
-            log << QLatin1StringView("Surface Type:") << QLatin1StringView(type)
-                << QLatin1StringView("\n");
-            log << QLatin1StringView("Surface Profile:") << QLatin1StringView(profile)
-                << QLatin1StringView("\n");
-            log << QStringLiteral("Surface Version: %1.%2\n")
-                            .arg(sharedFormat.majorVersion())
-                            .arg(sharedFormat.minorVersion());
-        }
-        log << QLatin1StringView("\n");
-#endif // QT_CONFIG(opengl) && BUILDFLAG(IS_OZONE)
+#endif // QT_CONFIG(opengl)
 
         log << QLatin1StringView("Init Parameters:\n");
         const base::CommandLine::SwitchMap switchMap = cmd->GetSwitches();
@@ -935,16 +890,6 @@ WebEngineContext::WebEngineContext()
     }
 
     if (QQuickWindow::graphicsApi() == QSGRendererInterface::Vulkan && usingSupportedSGBackend()) {
-        // TODO: Hardware accelerated compositing still uses OpenGL so we force desktop GL
-        //       implementation for now. Investigate if it is really necessary. Make sure it works
-        //       with ANGLE too when removing GLX code path.
-        if (usingANGLE) {
-            parsedCommandLine->RemoveSwitch(switches::kUseANGLE);
-            parsedCommandLine->RemoveSwitch(switches::kUseGL);
-            parsedCommandLine->AppendSwitchASCII(switches::kUseGL,
-                                                 gl::kGLImplementationDesktopName);
-        }
-
         parsedCommandLine->AppendSwitchASCII(switches::kUseVulkan,
                                              switches::kVulkanImplementationNameNative);
         enableFeatures.push_back(features::kVulkan.name);
@@ -1009,55 +954,9 @@ WebEngineContext::WebEngineContext()
             parsedCommandLine->AppendSwitch(switches::kDisableGpuRasterization);
             parsedCommandLine->AppendSwitch(switches::kIgnoreGpuBlocklist);
         }
-#if QT_CONFIG(opengl)
         if (glType != gl::kGLImplementationANGLEName) {
-#if BUILDFLAG(IS_OZONE)
-            if (usingSoftwareDynamicGL() && !enableGLSoftwareRendering) {
-                qWarning("The current Chromium GL implementation is not expected to work with the "
-                         "current software rendering configuration.");
-            }
-
-            [glType, parsedCommandLine]() {
-                QOpenGLContext *shareContext = QOpenGLContext::globalShareContext();
-                if (!shareContext || !shareContext->isValid()) {
-                    qWarning("WebEngineContext is used before QtWebEngineQuick::initialize() or "
-                             "OpenGL context creation failed.");
-                    return;
-                }
-
-                const QSurfaceFormat sharedFormat = shareContext->format();
-                if (sharedFormat.profile() == QSurfaceFormat::CompatibilityProfile)
-                    parsedCommandLine->AppendSwitch(switches::kCreateDefaultGLContext);
-
-                switch (sharedFormat.renderableType()) {
-                case QSurfaceFormat::OpenGL:
-                    if (sharedFormat.profile() == QSurfaceFormat::CoreProfile) {
-                        qWarning("An OpenGL Core Profile was requested, but it is not supported "
-                                 "on the current platform. Falling back to a non-Core profile. "
-                                 "Note that this might cause rendering issues.");
-                    }
-                    if (glType != gl::kGLImplementationDesktopName) {
-                        qWarning("Current surface is not compatible with Chromium's GL "
-                                 "implementation.");
-                    }
-                    return;
-                case QSurfaceFormat::OpenGLES:
-                    if (glType != gl::kGLImplementationDesktopName) {
-                        qWarning("Current surface is not compatible with Chromium's GL "
-                                 "implementation.");
-                    }
-                    return;
-                case QSurfaceFormat::OpenVG:
-                case QSurfaceFormat::DefaultRenderableType:
-                default:
-                    qWarning("Unsupported rendering surface format.");
-                }
-            }();
-#else
             qWarning("Only --use-gl=angle is supported on this platform.");
-#endif // BUILDFLAG(IS_OZONE)
         }
-#endif // QT_CONFIG(opengl)
     } else if (!disableGpu) {
         parsedCommandLine->AppendSwitch(switches::kDisableGpu);
     }

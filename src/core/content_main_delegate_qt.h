@@ -10,10 +10,6 @@
 #include "content_client_qt.h"
 #include "content_utility_client_qt.h"
 
-#if BUILDFLAG(IS_OZONE)
-#include "compositor/content_gpu_client_qt.h"
-#endif
-
 namespace QtWebEngineCore {
 
 class ContentMainDelegateQt : public content::ContentMainDelegate
@@ -26,9 +22,6 @@ public:
 
     content::ContentClient *CreateContentClient() override;
     content::ContentBrowserClient* CreateContentBrowserClient() override;
-#if BUILDFLAG(IS_OZONE)
-    content::ContentGpuClient* CreateContentGpuClient() override;
-#endif
     content::ContentRendererClient* CreateContentRendererClient() override;
     content::ContentUtilityClient* CreateContentUtilityClient() override;
     std::optional<int> BasicStartupComplete() override;
@@ -36,9 +29,6 @@ public:
 private:
     ContentClientQt m_contentClient;
     std::unique_ptr<ContentBrowserClientQt> m_browserClient;
-#if BUILDFLAG(IS_OZONE)
-    std::unique_ptr<ContentGpuClientQt> m_gpuClient;
-#endif
     std::unique_ptr<ContentUtilityClientQt> m_utilityClient;
 };
 

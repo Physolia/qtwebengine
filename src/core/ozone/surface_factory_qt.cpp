@@ -18,14 +18,11 @@
 #include <QtGui/qtgui-config.h>
 
 #if QT_CONFIG(opengl) && BUILDFLAG(IS_OZONE_X11)
-#include "ozone/gl_ozone_glx_qt.h"
-
 #include "ui/gfx/linux/gpu_memory_buffer_support_x11.h"
 #endif
 
 #if QT_CONFIG(egl)
 #include "ozone/egl_helper.h"
-#include "ozone/gl_ozone_egl_qt.h"
 #endif
 
 #if QT_CONFIG(webengine_vulkan)
@@ -36,24 +33,10 @@ namespace QtWebEngineCore {
 
 SurfaceFactoryQt::SurfaceFactoryQt()
 {
-#if QT_CONFIG(opengl) && BUILDFLAG(IS_OZONE_X11)
-    if (OzoneUtilQt::usingGLX()) {
-        m_impls.push_back({ gl::GLImplementationParts(gl::kGLImplementationDesktopGL),
-                            std::make_unique<ui::GLOzoneGLXQt>() });
-    }
-#endif
-
-#if QT_CONFIG(egl)
-    if (OzoneUtilQt::usingEGL()) {
-        m_impls.push_back({ gl::GLImplementationParts(gl::kGLImplementationEGLGLES2),
-                            std::make_unique<ui::GLOzoneEGLQt>() });
-        m_impls.push_back({ gl::GLImplementationParts(gl::kGLImplementationDesktopGL),
-                            std::make_unique<ui::GLOzoneEGLQt>() });
-    }
-#endif
-
+#if QT_CONFIG(opengl)
     m_impls.push_back({ gl::GLImplementationParts(gl::kGLImplementationEGLANGLE),
                         std::make_unique<ui::GLOzoneANGLEQt>() });
+#endif
     m_impls.push_back({ gl::GLImplementationParts(gl::kGLImplementationDisabled), nullptr });
 }
 

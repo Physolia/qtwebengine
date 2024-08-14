@@ -201,14 +201,6 @@ content::ContentBrowserClient *ContentMainDelegateQt::CreateContentBrowserClient
     return m_browserClient.get();
 }
 
-#if BUILDFLAG(IS_OZONE)
-content::ContentGpuClient *ContentMainDelegateQt::CreateContentGpuClient()
-{
-    m_gpuClient.reset(new ContentGpuClientQt);
-    return m_gpuClient.get();
-}
-#endif
-
 content::ContentRendererClient *ContentMainDelegateQt::CreateContentRendererClient()
 {
 #if BUILDFLAG(IS_LINUX)

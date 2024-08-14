@@ -19,10 +19,6 @@
 #include "native_skia_output_device_vulkan.h"
 #endif
 
-#if defined(Q_OS_LINUX)
-#include "display_skia_output_device.h"
-#endif
-
 #if defined(Q_OS_WIN)
 #include "native_skia_output_device_direct3d11.h"
 #endif
@@ -44,17 +40,8 @@ viz::SkiaOutputSurfaceImplOnGpu::CreateOutputDevice()
 
 #if QT_CONFIG(opengl)
     if (graphicsApi == QSGRendererInterface::OpenGL) {
-        if (gl::GetGLImplementation() != gl::kGLImplementationEGLANGLE) {
-#if defined(Q_OS_LINUX)
-            if (context_state_->gr_context_type() == gpu::GrContextType::kGL) {
-                return std::make_unique<QtWebEngineCore::DisplaySkiaOutputDevice>(
-                        context_state_, renderer_settings_.requires_alpha_channel,
-                        shared_gpu_deps_->memory_tracker(), GetDidSwapBuffersCompleteCallback());
-            }
-#else
-            qFatal("This platform only supports ANGLE.");
-#endif // defined(Q_OS_LINUX)
-        }
+        if (gl::GetGLImplementation() != gl::kGLImplementationEGLANGLE)
+            qFatal("OpenGL is only supported over ANGLE.");
 
         return std::make_unique<QtWebEngineCore::NativeSkiaOutputDeviceOpenGL>(
                 context_state_, renderer_settings_.requires_alpha_channel,

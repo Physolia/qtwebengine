@@ -28,11 +28,7 @@ class Q_WEBENGINECORE_EXPORT Compositor
 
 public:
     // Identifies the implementation type.
-    enum class Type {
-        Software,
-        OpenGL, // TODO: Legacy, remove it with DisplaySkiaOutputDevice!
-        Native
-    };
+    enum class Type { Software, Native };
 
     // Identifies a compositor.
     //

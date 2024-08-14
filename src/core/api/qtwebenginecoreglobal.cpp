@@ -13,77 +13,8 @@
 
 #include <QUrl>
 
-#if QT_CONFIG(opengl) && defined(Q_OS_LINUX)
-#include <QGuiApplication>
-#include <QOpenGLContext>
-#include <QQuickWindow>
-#include <QThread>
-
-QT_BEGIN_NAMESPACE
-Q_GUI_EXPORT void qt_gl_set_global_share_context(QOpenGLContext *context);
-Q_GUI_EXPORT QOpenGLContext *qt_gl_global_share_context();
-QT_END_NAMESPACE
-#endif
-
 namespace QtWebEngineCore {
-#if QT_CONFIG(opengl) && defined(Q_OS_LINUX)
-static QOpenGLContext *shareContext;
-
-static void deleteShareContext()
-{
-    if (qt_gl_global_share_context() == shareContext)
-        qt_gl_set_global_share_context(nullptr);
-    delete shareContext;
-    shareContext = 0;
-}
-
-static void ensureShareContext()
-{
-    // No need to override the shared context if QApplication already set one (e.g with Qt::AA_ShareOpenGLContexts).
-    if (qt_gl_global_share_context())
-        return;
-
-    QCoreApplication *app = QCoreApplication::instance();
-    if (!app) {
-        qFatal("QtWebEngineQuick::initialize() but no core application instance.");
-        return;
-    }
-
-    // Bail out silently if the user did not construct a QGuiApplication.
-    if (!qobject_cast<QGuiApplication *>(app))
-        return;
-
-    if (app->thread() != QThread::currentThread()) {
-        qFatal("QtWebEngineQuick::initialize() must be called from the Qt gui thread.");
-        return;
-    }
-
-    if (shareContext)
-        return;
-
-    shareContext = new QOpenGLContext;
-    QSurfaceFormat format = QSurfaceFormat::defaultFormat();
-
-    shareContext->setFormat(format);
-    shareContext->create();
-    qAddPostRoutine(deleteShareContext);
-    qt_gl_set_global_share_context(shareContext);
-
-    // Classes like QOpenGLWidget check for the attribute
-    app->setAttribute(Qt::AA_ShareOpenGLContexts);
-}
-#endif // QT_CONFIG(opengl) && defined(Q_OS_LINUX)
-
-Q_WEBENGINECORE_EXPORT void initialize()
-{
-#if QT_CONFIG(opengl) && defined(Q_OS_LINUX)
-    auto api = QQuickWindow::graphicsApi();
-    if (api != QSGRendererInterface::OpenGL && api != QSGRendererInterface::Vulkan)
-        QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
-
-    ensureShareContext();
-#endif
-}
+Q_WEBENGINECORE_EXPORT void initialize() { }
 
 bool closingDown()
 {
@@ -106,14 +37,6 @@ sandbox::SandboxInterfaceInfo *staticSandboxInterfaceInfo(sandbox::SandboxInterf
 } //namespace
 #endif
 
-static void initialize()
-{
-#if QT_CONFIG(opengl) && defined(Q_OS_LINUX)
-    // QCoreApplication is not yet instantiated, ensuring the call will be deferred
-    qAddPreRoutine(QtWebEngineCore::initialize);
-#endif
-}
-
 QT_BEGIN_NAMESPACE
 
 QString qWebEngineGetDomainAndRegistry(const QUrl &url) {
@@ -132,5 +55,3 @@ QString qWebEngineGetDomainAndRegistry(const QUrl &url) {
 }
 
 QT_END_NAMESPACE
-
-Q_CONSTRUCTOR_FUNCTION(initialize)

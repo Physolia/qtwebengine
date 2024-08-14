@@ -55,11 +55,6 @@
 #include <QtGui/qtgui-config.h>
 #include <QStandardPaths>
 
-#if QT_CONFIG(opengl)
-#include "ui/gl/gl_context.h"
-#include <QOpenGLContext>
-#endif
-
 #if BUILDFLAG(IS_MAC)
 #include "base/message_loop/message_pump_apple.h"
 #include "services/device/public/cpp/geolocation/geolocation_system_permission_manager.h"
