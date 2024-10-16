@@ -54,7 +54,46 @@ class WebContentsAdapterClient;
 class Q_WEBENGINECORE_EXPORT ProfileAdapter : public QObject
 {
 public:
-    explicit ProfileAdapter(const QString &storagePrefix = QString());
+    // KEEP IN SYNC with API or add mapping layer
+    enum HttpCacheType { MemoryHttpCache = 0, DiskHttpCache, NoCache };
+
+    enum PersistentCookiesPolicy {
+        NoPersistentCookies = 0,
+        AllowPersistentCookies,
+        ForcePersistentCookies
+    };
+
+    enum VisitedLinksPolicy {
+        DoNotTrackVisitedLinks = 0,
+        TrackVisitedLinksInMemory,
+        TrackVisitedLinksOnDisk,
+    };
+
+    enum class PersistentPermissionsPolicy : quint8 {
+        AskEveryTime = 0,
+        StoreInMemory,
+        StoreOnDisk,
+    };
+
+    enum ClientHint : uchar {
+        UAArchitecture,
+        UAPlatform,
+        UAModel,
+        UAMobile,
+        UAFullVersion,
+        UAPlatformVersion,
+        UABitness,
+        UAFullVersionList,
+        UAWOW64,
+    };
+
+    explicit ProfileAdapter(
+            const QString &storageName = QString(), const QString &dataPath = QString(),
+            const QString &cachePath = QString(), HttpCacheType httpCacheType = DiskHttpCache,
+            PersistentCookiesPolicy persistentCookiesPolicy = AllowPersistentCookies,
+            int httpCacheMaximumSize = 0,
+            PersistentPermissionsPolicy persistentPermissionPolicy =
+                    PersistentPermissionsPolicy::StoreOnDisk);
     virtual ~ProfileAdapter();
 
     static ProfileAdapter* createDefaultProfileAdapter();
@@ -115,43 +154,6 @@ public:
     void addWebContentsAdapterClient(WebContentsAdapterClient *client);
     void removeWebContentsAdapterClient(WebContentsAdapterClient *client);
     void releaseAllWebContentsAdapterClients();
-
-    // KEEP IN SYNC with API or add mapping layer
-    enum HttpCacheType {
-        MemoryHttpCache = 0,
-        DiskHttpCache,
-        NoCache
-    };
-
-    enum PersistentCookiesPolicy {
-        NoPersistentCookies = 0,
-        AllowPersistentCookies,
-        ForcePersistentCookies
-    };
-
-    enum VisitedLinksPolicy {
-        DoNotTrackVisitedLinks = 0,
-        TrackVisitedLinksInMemory,
-        TrackVisitedLinksOnDisk,
-    };
-
-    enum class PersistentPermissionsPolicy : quint8 {
-        AskEveryTime = 0,
-        StoreInMemory,
-        StoreOnDisk,
-    };
-
-    enum ClientHint : uchar {
-        UAArchitecture,
-        UAPlatform,
-        UAModel,
-        UAMobile,
-        UAFullVersion,
-        UAPlatformVersion,
-        UABitness,
-        UAFullVersionList,
-        UAWOW64,
-    };
 
     HttpCacheType httpCacheType() const;
     void setHttpCacheType(ProfileAdapter::HttpCacheType);

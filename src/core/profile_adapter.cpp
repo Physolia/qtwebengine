@@ -54,17 +54,27 @@ inline QString buildLocationFromStandardPath(const QString &standardPath, const 
 
 namespace QtWebEngineCore {
 
-ProfileAdapter::ProfileAdapter(const QString &storageName):
-      m_name(storageName)
+ProfileAdapter::ProfileAdapter(const QString &storageName, const QString &dataPath,
+                               const QString &cachePath, HttpCacheType httpCacheType,
+                               PersistentCookiesPolicy persistentCookiesPolicy,
+                               int httpCacheMaximumSize,
+                               PersistentPermissionsPolicy persistentPermissionPolicy)
+    : m_name(storageName)
     , m_offTheRecord(storageName.isEmpty())
+    , m_dataPath(dataPath.isEmpty() && !m_name.isEmpty() ? buildLocationFromStandardPath(
+                         QStandardPaths::writableLocation(QStandardPaths::AppDataLocation), m_name)
+                                                         : dataPath)
     , m_downloadPath(QStandardPaths::writableLocation(QStandardPaths::DownloadLocation))
-    , m_httpCacheType(DiskHttpCache)
-    , m_persistentCookiesPolicy(AllowPersistentCookies)
-    , m_persistentPermissionsPolicy(PersistentPermissionsPolicy::StoreOnDisk)
+    , m_cachePath(cachePath.isEmpty() && !m_name.isEmpty() ? buildLocationFromStandardPath(
+                          QStandardPaths::writableLocation(QStandardPaths::CacheLocation), m_name)
+                                                           : cachePath)
+    , m_httpCacheType(httpCacheType)
+    , m_persistentCookiesPolicy(persistentCookiesPolicy)
+    , m_persistentPermissionsPolicy(persistentPermissionPolicy)
     , m_visitedLinksPolicy(TrackVisitedLinksOnDisk)
     , m_clientHintsEnabled(true)
     , m_pushServiceEnabled(false)
-    , m_httpCacheMaxSize(0)
+    , m_httpCacheMaxSize(m_name.isEmpty() ? 0 : httpCacheMaximumSize)
 {
     WebEngineContext::current()->addProfileAdapter(this);
     // creation of profile requires webengine context
