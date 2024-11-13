@@ -10,6 +10,7 @@
 
 #include "media/gpu/buildflags.h"
 #include "ui/base/ozone_buildflags.h"
+#include "ui/gfx/buffer_format_util.h"
 #include "ui/gfx/linux/drm_util_linux.h"
 #include "ui/gfx/linux/gbm_buffer.h"
 #include "ui/gfx/linux/native_pixmap_dmabuf.h"
@@ -82,8 +83,12 @@ bool SurfaceFactoryQt::CanCreateNativePixmapForFormat(gfx::BufferFormat format)
 #endif
 
 #if QT_CONFIG(egl)
-    if (OzoneUtilQt::usingEGL())
+    if (OzoneUtilQt::usingEGL()) {
+        // Multiplanar format support is not yet implemented. See EGLHelper::queryDmaBuf().
+        if (gfx::BufferFormatIsMultiplanar(format))
+            return false;
         return ui::SurfaceFactoryOzone::CanCreateNativePixmapForFormat(format);
+    }
 #endif
 #endif // QT_CONFIG(opengl)
 
@@ -104,6 +109,10 @@ scoped_refptr<gfx::NativePixmap> SurfaceFactoryQt::CreateNativePixmap(
 #if QT_CONFIG(opengl)
     if (framebuffer_size && !gfx::Rect(size).Contains(gfx::Rect(*framebuffer_size)))
         return nullptr;
+
+    // Multiplanar format support is not yet implemented. It was not necessary with ANGLE at the
+    // time when the assert was added.
+    Q_ASSERT(!gfx::BufferFormatIsMultiplanar(format));
 
     gfx::NativePixmapHandle handle;
 
