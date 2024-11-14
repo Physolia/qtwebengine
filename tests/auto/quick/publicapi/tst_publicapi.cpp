@@ -37,6 +37,7 @@
 #include <private/qquickwebenginesettings_p.h>
 #include <private/qquickwebenginesingleton_p.h>
 #include <private/qquickwebenginetouchselectionmenurequest_p.h>
+#include <private/qquickwebengineprofileprototype_p.h>
 
 class tst_publicapi : public QObject {
     Q_OBJECT
@@ -82,6 +83,7 @@ static const QList<const QMetaObject *> typesToCheck = QList<const QMetaObject *
     << &QWebEngineWebAuthPinRequest::staticMetaObject
     << &QWebEngineFrame::staticMetaObject
     << &QWebEngineClientHints::staticMetaObject
+    << &QQuickWebEngineProfilePrototype::staticMetaObject
     ;
 
 static QList<QMetaEnum> knownEnumNames = QList<QMetaEnum>()
@@ -961,6 +963,14 @@ static const QStringList expectedAPI = QStringList()
     << "QWebEngineFrame.runJavaScript(QString,uint,QJSValue) --> void"
     << "QWebEngineFrame.size --> QSizeF"
     << "QWebEngineFrame.url --> QUrl"
+    << "QQuickWebEngineProfilePrototype.storageName --> QString"
+    << "QQuickWebEngineProfilePrototype.persistentStoragePath --> QString"
+    << "QQuickWebEngineProfilePrototype.cachePath --> QString"
+    << "QQuickWebEngineProfilePrototype.httpCacheType --> QQuickWebEngineProfile::HttpCacheType"
+    << "QQuickWebEngineProfilePrototype.persistentCookiesPolicy --> QQuickWebEngineProfile::PersistentCookiesPolicy"
+    << "QQuickWebEngineProfilePrototype.httpCacheMaximumSize --> int"
+    << "QQuickWebEngineProfilePrototype.persistentPermissionsPolicy --> QQuickWebEngineProfile::PersistentPermissionsPolicy"
+    << "QQuickWebEngineProfilePrototype.instance() --> QQuickWebEngineProfile*"
     ;
 
 static bool isCheckedEnum(QMetaType t)

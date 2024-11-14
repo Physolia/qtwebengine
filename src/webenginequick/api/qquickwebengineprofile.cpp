@@ -25,6 +25,7 @@
 #include <QtCore/qfileinfo.h>
 #include <QtQml/qqmlcontext.h>
 #include <QtQml/qqmlengine.h>
+#include <QtQml/qqmlinfo.h>
 
 using QtWebEngineCore::ProfileAdapter;
 
@@ -365,6 +366,9 @@ QQuickWebEngineScriptCollection *QQuickWebEngineProfilePrivate::getUserScripts()
 
     Each web engine view has an associated profile. Views that do not have a specific profile set
     share a common one, which is off-the-record by default.
+
+    \note It is recommended to use the new \l {WebEngineProfilePrototype} for profile creation
+    from 6.9
 */
 
 /*!
@@ -414,6 +418,9 @@ QQuickWebEngineProfile::QQuickWebEngineProfile(QObject *parent)
     : QObject(parent),
       d_ptr(new QQuickWebEngineProfilePrivate(new QtWebEngineCore::ProfileAdapter()))
 {
+    qmlWarning(this) << QStringLiteral(
+            "Please use WebEngineProfilePrototype for profile creation from 6.9, as this function "
+            "will be deprecated in the future releases");
     d_ptr->q_ptr = this;
 }
 

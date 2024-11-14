@@ -72,7 +72,7 @@ ApplicationWindow {
     Action {
         shortcut: StandardKey.AddTab
         onTriggered: {
-            tabBar.createTab(tabBar.count != 0 ? currentWebView.profile : defaultProfile);
+            tabBar.createTab(tabBar.count != 0 ? currentWebView.profile : defaultProfilePrototype.instance());
             addressBar.forceActiveFocus();
             addressBar.selectAll();
         }
@@ -319,10 +319,10 @@ ApplicationWindow {
                         id: offTheRecordEnabled
                         text: "Off The Record"
                         checkable: true
-                        checked: currentWebView && currentWebView.profile === otrProfile
+                        checked: currentWebView && currentWebView.profile === otrPrototype.instance()
                         onToggled: function(checked) {
                             if (currentWebView) {
-                                currentWebView.profile = checked ? otrProfile : defaultProfile;
+                                currentWebView.profile = checked ? otrPrototype.instance() : defaultProfilePrototype.instance();
                             }
                         }
                     }
@@ -496,7 +496,7 @@ ApplicationWindow {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        Component.onCompleted: createTab(defaultProfile)
+        Component.onCompleted: createTab(defaultProfilePrototype.instance())
 
         function createTab(profile, focusOnNewTab = true, url = undefined) {
             var webview = tabComponent.createObject(tabLayout, {profile: profile});
