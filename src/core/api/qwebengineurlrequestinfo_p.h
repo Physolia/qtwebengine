@@ -42,7 +42,8 @@ public:
                                     const QUrl &u, const QUrl &fpu, const QUrl &i,
                                     const QByteArray &m,
                                     QtWebEngineCore::ResourceRequestBody *const rb = nullptr,
-                                    const QHash<QByteArray, QByteArray> &h = {});
+                                    const QHash<QByteArray, QByteArray> &h = {},
+                                    bool isDownload = false);
 
     QWebEngineUrlRequestInfo::ResourceType resourceType;
     QWebEngineUrlRequestInfo::NavigationType navigationType;
@@ -55,6 +56,7 @@ public:
     bool changed;
     QHash<QByteArray, QByteArray> extraHeaders;
     QtWebEngineCore::ResourceRequestBody *const resourceRequestBody;
+    bool isDownload;
 
     QWebEngineUrlRequestInfo *q_ptr;
 };

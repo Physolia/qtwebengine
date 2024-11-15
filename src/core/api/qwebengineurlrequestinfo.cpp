@@ -81,7 +81,7 @@ QWebEngineUrlRequestInfoPrivate::QWebEngineUrlRequestInfoPrivate(
         QWebEngineUrlRequestInfo::ResourceType resource,
         QWebEngineUrlRequestInfo::NavigationType navigation, const QUrl &u, const QUrl &fpu,
         const QUrl &i, const QByteArray &m, QtWebEngineCore::ResourceRequestBody *const rb,
-        const QHash<QByteArray, QByteArray> &h)
+        const QHash<QByteArray, QByteArray> &h, bool isDownload)
     : resourceType(resource)
     , navigationType(navigation)
     , shouldBlockRequest(false)
@@ -93,6 +93,7 @@ QWebEngineUrlRequestInfoPrivate::QWebEngineUrlRequestInfoPrivate(
     , changed(false)
     , extraHeaders(h)
     , resourceRequestBody(rb)
+    , isDownload(isDownload)
 {}
 
 /*!
@@ -255,6 +256,20 @@ QByteArray QWebEngineUrlRequestInfo::requestMethod() const
 QIODevice *QWebEngineUrlRequestInfo::requestBody() const
 {
     return d_ptr->resourceRequestBody;
+}
+
+/*!
+    Returns true if the request was initiated by an explicit download action
+    from the user.
+
+    A download can still occurs, even when this function return false.
+
+    \since 6.9
+*/
+
+bool QWebEngineUrlRequestInfo::isDownload() const
+{
+    return d_ptr->isDownload;
 }
 
 /*!

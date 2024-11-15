@@ -100,13 +100,13 @@ class InterceptedRequest : public network::mojom::URLLoader
                          , public network::mojom::URLLoaderClient
 {
 public:
-    InterceptedRequest(ProfileAdapter *profile_adapter,
-                       int frame_tree_node_id, int32_t request_id, uint32_t options,
-                       const network::ResourceRequest &request,
+    InterceptedRequest(ProfileAdapter *profile_adapter, int frame_tree_node_id, int32_t request_id,
+                       uint32_t options, const network::ResourceRequest &request,
                        const net::MutableNetworkTrafficAnnotationTag &traffic_annotation,
                        mojo::PendingReceiver<network::mojom::URLLoader> loader,
                        mojo::PendingRemote<network::mojom::URLLoaderClient> client,
-                       mojo::PendingRemote<network::mojom::URLLoaderFactory> target_factory);
+                       mojo::PendingRemote<network::mojom::URLLoaderFactory> target_factory,
+                       content::ContentBrowserClient::URLLoaderFactoryType type);
     ~InterceptedRequest() override;
 
     void Restart();
@@ -185,15 +185,17 @@ private:
     mojo::Remote<network::mojom::URLLoaderFactory> target_factory_;
 
     base::WeakPtrFactory<InterceptedRequest> weak_factory_;
+    content::ContentBrowserClient::URLLoaderFactoryType type_;
 };
 
-InterceptedRequest::InterceptedRequest(ProfileAdapter *profile_adapter,
-                                       int frame_tree_node_id, int32_t request_id, uint32_t options,
-                                       const network::ResourceRequest &request,
-                                       const net::MutableNetworkTrafficAnnotationTag &traffic_annotation,
-                                       mojo::PendingReceiver<network::mojom::URLLoader> loader_receiver,
-                                       mojo::PendingRemote<network::mojom::URLLoaderClient> client,
-                                       mojo::PendingRemote<network::mojom::URLLoaderFactory> target_factory)
+InterceptedRequest::InterceptedRequest(
+        ProfileAdapter *profile_adapter, int frame_tree_node_id, int32_t request_id,
+        uint32_t options, const network::ResourceRequest &request,
+        const net::MutableNetworkTrafficAnnotationTag &traffic_annotation,
+        mojo::PendingReceiver<network::mojom::URLLoader> loader_receiver,
+        mojo::PendingRemote<network::mojom::URLLoaderClient> client,
+        mojo::PendingRemote<network::mojom::URLLoaderFactory> target_factory,
+        content::ContentBrowserClient::URLLoaderFactoryType type)
     : profile_adapter_(profile_adapter)
     , frame_tree_node_id_(frame_tree_node_id)
     , request_id_(request_id)
@@ -205,6 +207,7 @@ InterceptedRequest::InterceptedRequest(ProfileAdapter *profile_adapter,
     , target_client_(std::move(client))
     , target_factory_(std::move(target_factory))
     , weak_factory_(this)
+    , type_(type)
 {
     const bool disable_web_security = base::CommandLine::ForCurrentProcess()->HasSwitch(switches::kDisableWebSecurity);
     current_response_ = createResponse(request_);
@@ -334,9 +337,10 @@ void InterceptedRequest::Restart()
     if (!request_.referrer.is_empty())
         headers.insert("Referer", toQt(request_.referrer).toEncoded());
 
+    const bool isDownload = type_ == content::ContentBrowserClient::URLLoaderFactoryType::kDownload;
     auto info = new QWebEngineUrlRequestInfoPrivate(
             resourceType, navigationType, originalUrl, firstPartyUrl, initiator,
-            QByteArray::fromStdString(request_.method), &request_body_, headers);
+            QByteArray::fromStdString(request_.method), &request_body_, headers, isDownload);
     Q_ASSERT(!request_info_);
     request_info_.reset(new QWebEngineUrlRequestInfo(info));
 
@@ -546,10 +550,15 @@ void InterceptedRequest::SendErrorAndCompleteImmediately(int error_code)
     delete this;
 }
 
-ProxyingURLLoaderFactoryQt::ProxyingURLLoaderFactoryQt(ProfileAdapter *adapter, int frame_tree_node_id,
-                                                       mojo::PendingReceiver<network::mojom::URLLoaderFactory> loader_receiver,
-                                                       mojo::PendingRemote<network::mojom::URLLoaderFactory> target_factory_info)
-    : m_profileAdapter(adapter), m_frameTreeNodeId(frame_tree_node_id), m_weakFactory(this)
+ProxyingURLLoaderFactoryQt::ProxyingURLLoaderFactoryQt(
+        ProfileAdapter *adapter, int frame_tree_node_id,
+        mojo::PendingReceiver<network::mojom::URLLoaderFactory> loader_receiver,
+        mojo::PendingRemote<network::mojom::URLLoaderFactory> target_factory_info,
+        content::ContentBrowserClient::URLLoaderFactoryType type)
+    : m_profileAdapter(adapter)
+    , m_frameTreeNodeId(frame_tree_node_id)
+    , m_weakFactory(this)
+    , m_type(type)
 {
     DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
     if (target_factory_info) {
@@ -578,9 +587,10 @@ void ProxyingURLLoaderFactoryQt::CreateLoaderAndStart(mojo::PendingReceiver<netw
         m_targetFactory->Clone(target_factory_clone.InitWithNewPipeAndPassReceiver());
 
     // Will manage its own lifetime
-    InterceptedRequest *req = new InterceptedRequest(m_profileAdapter, m_frameTreeNodeId, request_id, options,
-                                                     request, traffic_annotation, std::move(loader),
-                                                     std::move(url_loader_client), std::move(target_factory_clone));
+    InterceptedRequest *req = new InterceptedRequest(
+            m_profileAdapter, m_frameTreeNodeId, request_id, options, request, traffic_annotation,
+            std::move(loader), std::move(url_loader_client), std::move(target_factory_clone),
+            m_type);
     req->Restart();
 }
 

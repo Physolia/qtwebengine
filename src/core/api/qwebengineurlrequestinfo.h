@@ -72,6 +72,7 @@ public:
     QByteArray requestMethod() const;
     QIODevice *requestBody() const;
     bool changed() const;
+    bool isDownload() const;
 
     void block(bool shouldBlock);
     void redirect(const QUrl &url);

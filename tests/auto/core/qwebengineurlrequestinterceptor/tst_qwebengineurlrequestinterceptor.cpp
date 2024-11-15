@@ -55,6 +55,7 @@ private Q_SLOTS:
     void postWithBody();
     void profilePreventsPageInterception_data();
     void profilePreventsPageInterception();
+    void download();
 };
 
 tst_QWebEngineUrlRequestInterceptor::tst_QWebEngineUrlRequestInterceptor()
@@ -88,6 +89,7 @@ struct RequestInfo {
         , initiator(info.initiator())
         , resourceType(info.resourceType())
         , headers(info.httpHeaders())
+        , download(info.isDownload())
     {}
 
     QUrl requestUrl;
@@ -95,6 +97,7 @@ struct RequestInfo {
     QUrl initiator;
     int resourceType;
     QHash<QByteArray, QByteArray> headers;
+    bool download;
 };
 
 static const QUrl kRedirectUrl = QUrl("qrc:///resources/content.html");
@@ -1113,6 +1116,31 @@ void tst_QWebEngineUrlRequestInterceptor::profilePreventsPageInterception()
     QTRY_COMPARE(loadSpy.size(), 1);
     QCOMPARE(profileInterceptor.ran, interceptInProfile);
     QCOMPARE(pageInterceptor.ran, interceptInPage);
+}
+
+void tst_QWebEngineUrlRequestInterceptor::download()
+{
+    HttpServer server;
+    server.setResourceDirs({ ":/resources" });
+    QVERIFY(server.start());
+
+    TestRequestInterceptor interceptor;
+    QWebEnginePage page;
+    page.setUrlRequestInterceptor(&interceptor);
+    QSignalSpy loadSpy(&page, SIGNAL(loadFinished(bool)));
+
+    const auto url = QUrl(server.url("/content.html"));
+
+    page.load(url);
+    QTRY_COMPARE(loadSpy.size(), 1);
+    QCOMPARE(interceptor.requestInfos.size(), 1);
+    QCOMPARE(interceptor.requestInfos.at(0).download, false);
+
+    interceptor.requestInfos.clear();
+
+    page.download(url);
+    QTRY_COMPARE(interceptor.requestInfos.size(), 1);
+    QCOMPARE(interceptor.requestInfos.at(0).download, true);
 }
 
 QTEST_MAIN(tst_QWebEngineUrlRequestInterceptor)

@@ -1218,7 +1218,6 @@ void ContentBrowserClientQt::WillCreateURLLoaderFactory(
 {
     Q_UNUSED(isolation_info);
     Q_UNUSED(render_process_id);
-    Q_UNUSED(type);
     Q_UNUSED(request_initiator);
     Q_UNUSED(navigation_id);
     Q_UNUSED(ukm_source_id);
@@ -1245,9 +1244,10 @@ void ContentBrowserClientQt::WillCreateURLLoaderFactory(
     auto adapter = static_cast<ProfileQt *>(browser_context)->profileAdapter();
     // Will manage its own lifetime
     // FIXME: use navigation_response_task_runner?
-    new ProxyingURLLoaderFactoryQt(adapter,
-                                   frame ? frame->GetFrameTreeNodeId() : content::RenderFrameHost::kNoFrameTreeNodeId,
-                                   std::move(proxied_receiver), std::move(pending_url_loader_factory));
+    new ProxyingURLLoaderFactoryQt(
+            adapter,
+            frame ? frame->GetFrameTreeNodeId() : content::RenderFrameHost::kNoFrameTreeNodeId,
+            std::move(proxied_receiver), std::move(pending_url_loader_factory), type);
 }
 
 std::vector<std::unique_ptr<content::URLLoaderRequestInterceptor>>
