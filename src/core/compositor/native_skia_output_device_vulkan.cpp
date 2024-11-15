@@ -128,26 +128,30 @@ QSGTexture *NativeSkiaOutputDeviceVulkan::texture(QQuickWindow *win, uint32_t te
 #if BUILDFLAG(IS_OZONE)
     base::ScopedFD scopedFd;
 
+    VkSubresourceLayout planeLayout = {
+        .offset = 0,
+        .size = 0,
+        .rowPitch = 0,
+        .arrayPitch = 0,
+        .depthPitch = 0,
+    };
+
+    VkImageDrmFormatModifierExplicitCreateInfoEXT modifierInfo = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_DRM_FORMAT_MODIFIER_EXPLICIT_CREATE_INFO_EXT,
+        .pNext = nullptr,
+        .drmFormatModifier = 0,
+        .drmFormatModifierPlaneCount = 1,
+        .pPlaneLayouts = &planeLayout,
+    };
+
     if (nativePixmap) {
         gfx::NativePixmapHandle nativePixmapHandle = nativePixmap->ExportHandle();
         if (nativePixmapHandle.planes.size() != 1)
             qFatal("VULKAN: Multiple planes are not supported.");
 
-        VkSubresourceLayout planeLayout = {
-            .offset = nativePixmapHandle.planes[0].offset,
-            .size = 0,
-            .rowPitch = nativePixmapHandle.planes[0].stride,
-            .arrayPitch = 0,
-            .depthPitch = 0,
-        };
-
-        VkImageDrmFormatModifierExplicitCreateInfoEXT modifierInfo = {
-            .sType = VK_STRUCTURE_TYPE_IMAGE_DRM_FORMAT_MODIFIER_EXPLICIT_CREATE_INFO_EXT,
-            .pNext = nullptr,
-            .drmFormatModifier = nativePixmapHandle.modifier,
-            .drmFormatModifierPlaneCount = 1,
-            .pPlaneLayouts = &planeLayout,
-        };
+        planeLayout.offset = nativePixmapHandle.planes[0].offset;
+        planeLayout.rowPitch = nativePixmapHandle.planes[0].stride;
+        modifierInfo.drmFormatModifier = nativePixmapHandle.modifier;
 
         externalMemoryImageCreateInfo.pNext = &modifierInfo;
         externalMemoryImageCreateInfo.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT;
