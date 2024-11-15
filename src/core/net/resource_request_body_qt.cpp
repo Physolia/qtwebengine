@@ -166,16 +166,4 @@ void ResourceRequestBody::readDataElementPipe(
 
 void ResourceRequestBody::pipeGetterOnReadComplete(int32_t status, uint64_t size) { }
 
-void ResourceRequestBody::appendFilesForTest(const QString &path)
-{
-    if (!m_requestBody)
-        return;
-
-    base::FilePath filePath = toFilePath(path);
-    m_requestBody->elements_mutable()->push_back(static_cast<network::DataElement>(
-            network::DataElementFile(filePath, 0, 23, base::Time())));
-    m_requestBody->elements_mutable()->push_back(static_cast<network::DataElement>(
-            network::DataElementFile(filePath, 10, 23, base::Time())));
-}
-
 } // namespace QtWebEngineCore

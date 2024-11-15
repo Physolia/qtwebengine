@@ -16,8 +16,6 @@ class ContentBrowserClientQt;
 class InterceptedRequest;
 } // namespace QtWebEngineCore
 
-class TestPostRequestInterceptor;
-
 QT_BEGIN_NAMESPACE
 
 class QWebEngineUrlRequestInfoPrivate;
@@ -83,7 +81,6 @@ public:
 private:
     friend class QtWebEngineCore::ContentBrowserClientQt;
     friend class QtWebEngineCore::InterceptedRequest;
-    friend class ::TestPostRequestInterceptor;
     Q_DISABLE_COPY(QWebEngineUrlRequestInfo)
     Q_DECLARE_PRIVATE(QWebEngineUrlRequestInfo)
 

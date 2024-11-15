@@ -325,13 +325,4 @@ QHash<QByteArray, QByteArray> QWebEngineUrlRequestInfo::httpHeaders() const
     return d_ptr->extraHeaders;
 }
 
-/*!
-    \internal
-*/
-void QWebEngineUrlRequestInfoPrivate::appendFileToResourceRequestBodyForTest(const QString &path)
-{
-    if (resourceRequestBody)
-        resourceRequestBody->appendFilesForTest(path);
-}
-
 QT_END_NAMESPACE

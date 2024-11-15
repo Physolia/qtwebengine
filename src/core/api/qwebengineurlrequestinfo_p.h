@@ -57,8 +57,6 @@ public:
     QtWebEngineCore::ResourceRequestBody *const resourceRequestBody;
 
     QWebEngineUrlRequestInfo *q_ptr;
-
-    void appendFileToResourceRequestBodyForTest(const QString &path);
 };
 
 QT_END_NAMESPACE

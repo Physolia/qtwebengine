@@ -43,8 +43,6 @@ public:
     qint64 writeData(const char *data, qint64 maxSize) override;
     bool isSequential() const override;
 
-    void appendFilesForTest(const QString &path);
-
 private:
     network::ResourceRequestBody *const m_requestBody;
 
