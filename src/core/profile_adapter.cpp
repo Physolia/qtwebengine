@@ -245,6 +245,11 @@ ProfileAdapter *ProfileAdapter::createDefaultProfileAdapter()
     return WebEngineContext::current()->createDefaultProfileAdapter();
 }
 
+bool ProfileAdapter::profileExistOnPath(const QString &dataPath)
+{
+    return WebEngineContext::current()->profileExistOnPath(dataPath);
+}
+
 ProfileAdapter *ProfileAdapter::defaultProfileAdapter()
 {
     WebEngineContext *context = WebEngineContext::current();

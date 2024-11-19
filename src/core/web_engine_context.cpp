@@ -545,6 +545,15 @@ void WebEngineContext::destroyProfileAdapter()
     }
 }
 
+bool WebEngineContext::profileExistOnPath(const QString &dataPath)
+{
+    for (auto existingProfileAdapter : m_profileAdapters) {
+        if (existingProfileAdapter->dataPath() == dataPath)
+            return true;
+    }
+    return false;
+}
+
 void WebEngineContext::addProfileAdapter(ProfileAdapter *profileAdapter)
 {
     Q_ASSERT(!m_profileAdapters.contains(profileAdapter));

@@ -6,6 +6,10 @@
 #include "qwebengineprofilebuilder_p.h"
 #include "profile_adapter.h"
 
+#include <QCoreApplication>
+#include <QDir>
+#include <QStandardPaths>
+
 /*!
     \class QWebEngineProfileBuilder
     \brief The QWebEngineProfileBuilder class provides a way to construct \l{QWebEngineProfile}.
@@ -43,12 +47,37 @@ QWebEngineProfile *QWebEngineProfileBuilder::createOffTheRecordProfile(QObject *
     A disk-based \l{QWebEngineProfile} should be destroyed before the application exit, otherwise the
     cache and persistent data may not be fully flushed to disk.
 
+    \note When creating a disk-based profile, if the data path is already in use by another
+    profile, the function will return a null pointer.
+
     \sa QWebEngineProfile::storageName()
 */
 QWebEngineProfile *QWebEngineProfileBuilder::createProfile(const QString &storageName,
                                                            QObject *parent)
 {
     d_ptr->m_storageName = storageName;
+    auto buildLocationFromStandardPath = [](const QString &standardPath, const QString &name) {
+        QString location = standardPath;
+        if (location.isEmpty())
+            location = QDir::homePath() % QLatin1String("/.") % QCoreApplication::applicationName();
+
+        location.append(QLatin1String("/QtWebEngine/") % name);
+        return location;
+    };
+
+    QString dataPath = d_ptr->m_dataPath;
+    if (dataPath.isEmpty() && !storageName.isEmpty())
+        dataPath = buildLocationFromStandardPath(
+                QStandardPaths::writableLocation(QStandardPaths::AppDataLocation), storageName);
+
+    if (!dataPath.isEmpty()) {
+        if (QtWebEngineCore::ProfileAdapter::profileExistOnPath(dataPath)) {
+            qWarning("Unable to create new profile, "
+                     "as another profile is using the same data path");
+            return nullptr;
+        }
+    }
+
     return new QWebEngineProfile(
             new QWebEngineProfilePrivate(new QtWebEngineCore::ProfileAdapter(
                     d_ptr->m_storageName, d_ptr->m_dataPath, d_ptr->m_cachePath,

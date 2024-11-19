@@ -99,6 +99,7 @@ public:
     static ProfileAdapter* createDefaultProfileAdapter();
     static ProfileAdapter* defaultProfileAdapter();
     static QObject* globalQObjectRoot();
+    static bool profileExistOnPath(const QString &dataPath);
 
     VisitedLinksManagerQt *visitedLinksManager();
     DownloadManagerDelegateQt *downloadManagerDelegate();

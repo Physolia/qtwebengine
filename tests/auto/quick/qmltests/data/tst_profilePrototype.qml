@@ -276,5 +276,31 @@ Item {
             compare(p.persistentPermissionsPolicy, isOffTheRecord && persistentPermissionsPolicy === WebEngineProfile.StoreOnDisk
                     ? WebEngineProfile.StoreInMemory : persistentPermissionsPolicy)
         }
+
+        function test_useSameDataPathForProfiles() {
+            var profileProtoType = Qt.createQmlObject("
+                   import QtWebEngine\n
+                    WebEngineProfilePrototype {\n
+                            storageName: 'SamePathTest'\n
+                        }", profileProtoTypeTest);
+
+            let p = profileProtoType.instance()
+            compare(p.storageName, 'SamePathTest')
+            verify(!p.offTheRecord)
+            compare(getPath(p.cachePath), cacheLocation + '/QtWebEngine/' + p.storageName)
+            compare(getPath(p.persistentStoragePath), appDataLocation + '/QtWebEngine/' + p.storageName)
+            compare(p.httpCacheType, WebEngineProfile.DiskHttpCache)
+            compare(p.httpCacheMaximumSize, 0)
+            compare(p.persistentCookiesPolicy, WebEngineProfile.AllowPersistentCookies)
+
+            var secondProfileProtoType = Qt.createQmlObject("
+                   import QtWebEngine\n
+                    WebEngineProfilePrototype {\n
+                            storageName: 'SamePathTest'\n
+                        }", profileProtoTypeTest);
+
+            let secondProfile = secondProfileProtoType.instance()
+            verify(!secondProfile)
+        }
     }
 }

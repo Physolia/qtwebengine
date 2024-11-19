@@ -75,6 +75,7 @@ public:
     void destroyProfileAdapter();
     void addProfileAdapter(ProfileAdapter *profileAdapter);
     void removeProfileAdapter(ProfileAdapter *profileAdapter);
+    bool profileExistOnPath(const QString &dataPath);
     void destroy();
     static base::CommandLine *initCommandLine(bool &useEmbeddedSwitches,
                                               bool &enableGLSoftwareRendering);

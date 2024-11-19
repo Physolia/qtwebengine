@@ -4,8 +4,13 @@
 #include "qquickwebengineprofileprototype_p_p.h"
 #include "profile_adapter.h"
 #include "qquickwebengineprofile_p.h"
+#include "profile_adapter.h"
+
 #include <QQuickWebEngineProfile>
 #include <QtQml/qqmlinfo.h>
+#include <QCoreApplication>
+#include <QDir>
+#include <QStandardPaths>
 
 QT_BEGIN_NAMESPACE
 
@@ -240,6 +245,29 @@ void QQuickWebEngineProfilePrototype::setPersistentPermissionsPolicy(
 */
 void QQuickWebEngineProfilePrototype::componentComplete()
 {
+    auto buildLocationFromStandardPath = [](const QString &standardPath, const QString &name) {
+        QString location = standardPath;
+        if (location.isEmpty())
+            location = QDir::homePath() % QLatin1String("/.") % QCoreApplication::applicationName();
+
+        location.append(QLatin1String("/QtWebEngine/") % name);
+        return location;
+    };
+
+    QString dataPath = d_ptr->m_persistentStoragePath;
+    if (dataPath.isEmpty() && !d_ptr->m_storageName.isEmpty())
+        dataPath = buildLocationFromStandardPath(
+                QStandardPaths::writableLocation(QStandardPaths::AppDataLocation),
+                d_ptr->m_storageName);
+
+    if (!dataPath.isEmpty()) {
+        if (QtWebEngineCore::ProfileAdapter::profileExistOnPath(dataPath)) {
+            qWarning("Unable to create new Profile, "
+                     "as another profile is using the same data path");
+            return;
+        }
+    }
+
     if (d_ptr->m_storageName.isEmpty()) {
         if (d_ptr->m_httpCacheType == QQuickWebEngineProfile::DiskHttpCache)
             d_ptr->m_httpCacheType = QQuickWebEngineProfile::MemoryHttpCache;
@@ -268,6 +296,8 @@ void QQuickWebEngineProfilePrototype::componentComplete()
 
     Returns an instance of WebEngineProfile.
 
+    \note This function will return a null pointer, if the \l persistentStoragePath
+    is already in use by another profile.
 */
 QQuickWebEngineProfile *QQuickWebEngineProfilePrototype::instance()
 {

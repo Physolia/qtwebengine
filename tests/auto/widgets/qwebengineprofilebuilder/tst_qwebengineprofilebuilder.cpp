@@ -21,6 +21,7 @@ private Q_SLOTS:
     void httpCacheSize();
     void persistentPermissionsPolicy_data();
     void persistentPermissionsPolicy();
+    void useSameDataPathForProfiles();
 };
 
 static QString StandardCacheLocation()
@@ -272,6 +273,24 @@ void tst_QWebEngineProfileBuilder::persistentPermissionsPolicy()
             ? StandardAppDataLocation() + QStringLiteral("/QtWebEngine/OffTheRecord")
             : StandardAppDataLocation() + QStringLiteral("/QtWebEngine/Test");
     QCOMPARE(profile->persistentStoragePath(), storagePath);
+}
+
+void tst_QWebEngineProfileBuilder::useSameDataPathForProfiles()
+{
+    QWebEngineProfileBuilder profileBuilder;
+    QScopedPointer<QWebEngineProfile> profile(profileBuilder.createProfile(QStringLiteral("Test")));
+    QVERIFY(!profile.isNull());
+    QVERIFY(!profile->isOffTheRecord());
+    QCOMPARE(profile->storageName(), QStringLiteral("Test"));
+    QCOMPARE(profile->httpCacheType(), QWebEngineProfile::DiskHttpCache);
+    QCOMPARE(profile->persistentCookiesPolicy(), QWebEngineProfile::AllowPersistentCookies);
+    QCOMPARE(profile->cachePath(), StandardCacheLocation() + QStringLiteral("/QtWebEngine/Test"));
+    QCOMPARE(profile->persistentStoragePath(),
+             StandardAppDataLocation() + QStringLiteral("/QtWebEngine/Test"));
+
+    QScopedPointer<QWebEngineProfile> secondProfile(
+            profileBuilder.createProfile(QStringLiteral("Test")));
+    QVERIFY(secondProfile.isNull());
 }
 
 QTEST_MAIN(tst_QWebEngineProfileBuilder)
