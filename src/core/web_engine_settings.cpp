@@ -286,6 +286,7 @@ void WebEngineSettings::initDefaults()
         s_defaultAttributes.insert(QWebEngineSettings::PreferCSSMarginsForPrinting, false);
         s_defaultAttributes.insert(QWebEngineSettings::TouchEventsApiEnabled,
                                    isTouchScreenDetected());
+        s_defaultAttributes.insert(QWebEngineSettings::BackForwardCacheEnabled, false);
     }
 
     if (s_defaultFontFamilies.isEmpty()) {

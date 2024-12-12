@@ -284,6 +284,7 @@ private Q_SLOTS:
     void openLinkInNewPageWithWebWindowType();
     void keepInterceptorAfterNewWindowRequested();
     void chooseDesktopMedia();
+    void backForwardCache();
 
 private:
     static bool isFalseJavaScriptResult(QWebEnginePage *page, const QString &javaScript);
@@ -5754,6 +5755,51 @@ void tst_QWebEnginePage::chooseDesktopMedia()
     QTRY_VERIFY(desktopMediaRequested);
     QTRY_VERIFY(permissionRequested || emptyDesktopMediaRequested);
 #endif // QT_CONFIG(webengine_extensions) && QT_CONFIG(webengine_webrtc)
+}
+
+void tst_QWebEnginePage::backForwardCache()
+{
+    QWebEngineView view;
+    view.resize(480, 320);
+    view.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&view));
+
+    HttpServer server;
+    connect(&server, &HttpServer::newRequest, &server, [&] (HttpReqRep *r) {
+        if (r->requestMethod() == "GET") {
+            if (r->requestPath() == "/first.html" || r->requestPath() == "/second.html") {
+                r->setResponseBody("<html><body><head><script>"
+                                   "var persistedCount = 0;"
+                                   "window.onpageshow = (event) => {"
+                                   "   if (event.persisted) persistedCount++;"
+                                   "};"
+                                   "</script></head></body></html>");
+                r->sendResponse();
+            }
+        }
+    });
+    QVERIFY(server.start());
+
+    QWebEnginePage *page = view.page();
+    page->settings()->setAttribute(QWebEngineSettings::BackForwardCacheEnabled, true);
+    QSignalSpy loadSpy(page, SIGNAL(loadFinished(bool)));
+
+    page->load(QUrl(server.url("/first.html")));
+    QTRY_COMPARE(loadSpy.size(), 1);
+    QCOMPARE(evaluateJavaScriptSync(page, "persistedCount").toInt(), 0);
+
+    page->load(QUrl(server.url("/second.html")));
+    QTRY_COMPARE(loadSpy.size(), 2);
+    QVERIFY(page->history()->canGoBack());
+    QCOMPARE(evaluateJavaScriptSync(page, "persistedCount").toInt(), 0);
+
+    page->triggerAction(QWebEnginePage::Back);
+    QTRY_COMPARE(loadSpy.size(), 3);
+    QCOMPARE(evaluateJavaScriptSync(page, "persistedCount").toInt(), 1);
+
+    page->triggerAction(QWebEnginePage::Forward);
+    QTRY_COMPARE(loadSpy.size(), 4);
+    QCOMPARE(evaluateJavaScriptSync(page, "persistedCount").toInt(), 1);
 }
 
 static QByteArrayList params = {QByteArrayLiteral("--use-fake-device-for-media-stream")};

@@ -525,6 +525,8 @@ static const QStringList expectedAPI = QStringList()
     << "QQuickWebEngineSettings.readingFromCanvasEnabledChanged() --> void"
     << "QQuickWebEngineSettings.touchEventsApiEnabled --> bool"
     << "QQuickWebEngineSettings.touchEventsApiEnabledChanged() --> void"
+    << "QQuickWebEngineSettings.backForwardCacheEnabled --> bool"
+    << "QQuickWebEngineSettings.backForwardCacheEnabledChanged() --> void"
     << "QQuickWebEngineSingleton.defaultProfile --> QQuickWebEngineProfile*"
     << "QQuickWebEngineSingleton.settings --> QQuickWebEngineSettings*"
     << "QQuickWebEngineSingleton.script() --> QWebEngineScript"

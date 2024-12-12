@@ -872,6 +872,12 @@ void WebContentsDelegateQt::ContentsZoomChange(bool zoom_in)
         adapter->setZoomFactor(adapter->currentZoomFactor() - 0.1f);
 }
 
+bool WebContentsDelegateQt::IsBackForwardCacheSupported(content::WebContents &web_contents)
+{
+    Q_UNUSED(web_contents);
+    return webEngineSettings()->testAttribute(QWebEngineSettings::BackForwardCacheEnabled);
+}
+
 void WebContentsDelegateQt::ResourceLoadComplete(content::RenderFrameHost* render_frame_host,
                                                  const content::GlobalRequestID& request_id,
                                                  const blink::mojom::ResourceLoadInfo& resource_load_info)
