@@ -1489,7 +1489,7 @@ void QWebEngineView::printToPdf(const std::function<void(const QByteArray&)> &re
     the \l QWebEnginePage::Stop web action.
 
     \note This function rasterizes the result when rendering onto \a printer. Please consider raising
-    the default resolution of \a printer to at least 300 DPI or using printToPdf() to produce
+    the default resolution of \a printer to at least 300 DPI, or using printToPdf() to produce
     PDF file output more effectively.
 
     \since 6.2

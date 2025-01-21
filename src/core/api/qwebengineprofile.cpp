@@ -435,7 +435,7 @@ void QWebEngineProfile::setDownloadPath(const QString &path)
     \since 6.5
 
     Returns \c true if the push messaging service is enabled.
-    \note By default the push messaging service is disabled.
+    \note By default, the push messaging service is disabled.
 
     \sa setPushServiceEnabled()
 */

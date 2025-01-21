@@ -2502,7 +2502,7 @@ void QWebEnginePage::setLifecycleState(LifecycleState state)
   Setting the lifecycle state to a lower resource usage state than the
   recommended state may cause side-effects such as stopping background audio
   playback or loss of HTML form input. Setting the lifecycle state to a higher
-  resource state is however completely safe.
+  resource state is, however, completely safe.
 
   \sa lifecycleState, {Page Lifecycle API}, {WebEngine Lifecycle Example}
 */
@@ -2524,7 +2524,7 @@ QWebEnginePage::LifecycleState QWebEnginePage::recommendedState() const
   to voluntarily reduce their resource usage if they are not visible to the
   user.
 
-  If the page is connected to a \e {view} then this property will be managed
+  If the page is connected to a \e {view}, then this property will be managed
   automatically by the view according to its own visibility.
 
   \sa lifecycleState
