@@ -14,6 +14,8 @@
 #include "content/public/renderer/render_frame_observer_tracker.h"
 #include "third_party/blink/public/platform/web_content_settings_client.h"
 #include "url/gurl.h"
+#include "mojo/public/cpp/bindings/remote.h"
+#include "components/content_settings/common/content_settings_manager.mojom.h"
 
 namespace QtWebEngineCore {
 
@@ -34,9 +36,6 @@ public:
 
 private:
     // RenderFrameObserver implementation:
-#if BUILDFLAG(CONTENT_ENABLE_LEGACY_IPC)
-    bool OnMessageReceived(const IPC::Message &message) override;
-#endif
     void DidCommitProvisionalLoad(ui::PageTransition transition) override;
     void OnDestruct() override;
 
@@ -45,6 +44,9 @@ private:
 
     // Clears m_cachedStoragePermissions
     void ClearBlockedContentSettings();
+
+    mojo::Remote<content_settings::mojom::ContentSettingsManager> &GetContentSettingsManager();
+    mojo::Remote<content_settings::mojom::ContentSettingsManager> m_contentSettingsManager;
 
     // Caches the result of AllowStorage.
     using StoragePermissionsKey = std::pair<GURL, int>;

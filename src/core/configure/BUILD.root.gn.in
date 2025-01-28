@@ -129,6 +129,7 @@ shared_library("QtWebEngineCore") {
     "//components/autofill/core/browser",
     "//components/autofill/core/browser:buildflags",
     "//components/cdm/renderer",
+    "//components/content_settings/common:mojom",
     "//components/embedder_support/origin_trials",
     "//components/error_page/common",
     "//components/favicon/content",

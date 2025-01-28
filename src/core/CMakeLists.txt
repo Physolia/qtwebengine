@@ -85,7 +85,6 @@ foreach(arch ${archs})
                 autofill_popup_controller.cpp autofill_popup_controller.h autofill_popup_controller_p.h
                 browser_accessibility_manager_qt.cpp browser_accessibility_manager_qt.h
                 browser_main_parts_qt.cpp browser_main_parts_qt.h
-                browser_message_filter_qt.cpp browser_message_filter_qt.h
                 browsing_data_remover_delegate_qt.cpp browsing_data_remover_delegate_qt.h
                 build_config_qt.h
                 certificate_error_controller.cpp certificate_error_controller.h
@@ -96,7 +95,6 @@ foreach(arch ${archs})
                 clipboard_qt.cpp clipboard_qt.h
                 color_chooser_controller.cpp color_chooser_controller.h color_chooser_controller_p.h
                 color_chooser_qt.cpp color_chooser_qt.h
-                common/qt_messages.cpp common/qt_messages.h
                 compositor/compositor.cpp compositor/compositor.h
                 compositor/display_overrides.cpp
                 compositor/display_software_output_surface.cpp compositor/display_software_output_surface.h
@@ -193,6 +191,7 @@ foreach(arch ${archs})
                 web_usb_detector_qt.cpp web_usb_detector_qt.h
                 authenticator_request_client_delegate_qt.cpp authenticator_request_client_delegate_qt.h
                 authenticator_request_dialog_controller.cpp authenticator_request_dialog_controller.h authenticator_request_dialog_controller_p.h
+                content_settings_manager_qt.cpp content_settings_manager_qt.h
         )
 
         extend_gn_target(${buildGn} CONDITION QT_FEATURE_accessibility
@@ -366,7 +365,6 @@ foreach(arch ${archs})
             use_static_angle=true
             devtools_fast_bundle=false
             devtools_skip_typecheck=false
-            content_enable_legacy_ipc=true
             headless_use_policy=false
         )
         extend_gn_list(gnArgArg

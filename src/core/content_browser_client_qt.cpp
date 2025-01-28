@@ -79,13 +79,10 @@
 #include "web_engine_library_info.h"
 #include "web_engine_settings.h"
 #include "authenticator_request_client_delegate_qt.h"
+#include "content_settings_manager_qt.h"
 #include "api/qwebenginecookiestore.h"
 #include "api/qwebenginecookiestore_p.h"
 #include "api/qwebengineurlrequestinfo_p.h"
-
-#if BUILDFLAG(CONTENT_ENABLE_LEGACY_IPC)
-#include "browser_message_filter_qt.h"
-#endif
 
 #if QT_CONFIG(webengine_geolocation)
 #include "base/memory/ptr_util.h"
@@ -243,9 +240,6 @@ void ContentBrowserClientQt::RenderProcessWillLaunch(content::RenderProcessHost 
     // FIXME: Add a settings variable to enable/disable the file scheme.
     policy->GrantRequestScheme(id, url::kFileScheme);
     profileAdapter->userResourceController()->renderProcessStartedWithHost(host);
-#if BUILDFLAG(CONTENT_ENABLE_LEGACY_IPC)
-    host->AddFilter(new BrowserMessageFilterQt(id, profile));
-#endif // CONTENT_ENABLE_LEGACY_IPC
     bool is_incognito_process = profile->IsOffTheRecord();
     mojo::AssociatedRemote<qtwebengine::mojom::RendererConfiguration> renderer_configuration;
     host->GetChannel()->GetRemoteAssociatedInterface(&renderer_configuration);
@@ -399,6 +393,14 @@ void ContentBrowserClientQt::BindHostReceiverForRenderer(content::RenderProcessH
 #endif
 }
 
+static void BindContentSettingsManager(content::RenderFrameHost *frame_host,
+                                       mojo::PendingReceiver<content_settings::mojom::ContentSettingsManager> receiver)
+{
+    ContentSettingsManagerQt::Create(ProfileIODataQt::FromBrowserContext(
+                                             frame_host->GetBrowserContext()),
+                                     std::move(receiver));
+}
+
 static void BindNetworkHintsHandler(content::RenderFrameHost *frame_host,
                                     mojo::PendingReceiver<network_hints::mojom::NetworkHintsHandler> receiver)
 {
@@ -435,6 +437,8 @@ void ContentBrowserClientQt::RegisterBrowserInterfaceBindersForFrame(
         content::RenderFrameHost *render_frame_host,
         mojo::BinderMapWithContext<content::RenderFrameHost *> *map)
 {
+    map->Add<content_settings::mojom::ContentSettingsManager>(
+            base::BindRepeating(&BindContentSettingsManager));
     map->Add<network_hints::mojom::NetworkHintsHandler>(base::BindRepeating(&BindNetworkHintsHandler));
 #if QT_CONFIG(webengine_spellchecker)
     map->Add<spellcheck::mojom::SpellCheckHost>(base::BindRepeating(
